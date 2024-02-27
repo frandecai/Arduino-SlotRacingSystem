@@ -13,8 +13,10 @@
 #define LCD_ROWS 4
 #define SELECT_BUTTON_PIN 2
 #define CHOOSE_CANCEL_BUTTON_PIN 3
-#define SENSOR_LANE_1 4
-#define SENSOR_LANE_2 5
+#define SENSOR_LANE_1_PIN 4
+#define SENSOR_LANE_2_PIN 5
+#define POWER_LANE_1_PIN 8
+#define POWER_LANE_2_PIN 9
 #define BUZZER_PIN 9
 
 #define QUARTER  1000
@@ -27,6 +29,9 @@ boolean cleanScreen, inRace, pressedSelectButton,
 
 int option = 1;
 int segs1, segs2, laps1, laps2 = 0;
+
+int controller1_pin = A0;
+int controller2_pin = A1;
 
 float now1, now2, time1, time2, best1, best2 = 0;
 
@@ -68,7 +73,10 @@ void setup()
 
     pinMode(SELECT_BUTTON_PIN, INPUT);
     pinMode(CHOOSE_CANCEL_BUTTON_PIN, INPUT);
-    pinMode(SENSOR_LANE_1, INPUT);
+    pinMode(SENSOR_LANE_1_PIN, INPUT);
+    pinMode(SENSOR_LANE_2_PIN, INPUT);
+    pinMode(POWER_LANE_1_PIN, OUTPUT);
+    pinMode(POWER_LANE_2_PIN, OUTPUT);
     pinMode(BUZZER_PIN, OUTPUT);
 
     lcd.init();
@@ -122,8 +130,9 @@ void loop()
     // Serial.println(inRace);
     // Serial.print("SENSOR_LANE_1 ");
     // Serial.println(digitalRead(SENSOR_LANE_1));
-    Serial.print("countDown ");
-    Serial.println(countDown);
+    // Serial.print("countDown ");
+    // Serial.println(countDown);
+    
 
     // MENU
     if (inRace == false) {
@@ -353,6 +362,15 @@ void showTitlesInRace()
 
 void timeLapControl()
 {
+    // Set the outputs values for voltage in both lanes
+    int valueController1 = analogRead(controller1_pin);
+    int valueController2 = analogRead(controller2_pin);
+    int powerLane1 = map(valueController1, 0, 1023, 0, 255);
+    int powerLane2 = map(valueController2, 0, 1023, 0, 255);
+    analogWrite(POWER_LANE_1_PIN, powerLane1);
+    analogWrite(POWER_LANE_2_PIN, powerLane2);
+
+    // Calculations for times, bests and laps
     time1 = (millis() - now1) / 1000;
     lcd.setCursor(4, 1);
     lcd.print(time1, 1);
@@ -361,10 +379,10 @@ void timeLapControl()
     lcd.setCursor(13, 1);
     lcd.print(time2, 1);
 
-    if ((digitalRead(SENSOR_LANE_1) == LOW) && (readSensor1 == false)) { 
+    if ((digitalRead(SENSOR_LANE_1_PIN) == LOW) && (readSensor1 == false)) { 
         readSensor1 = true;
 
-    } else if ((digitalRead(SENSOR_LANE_1) == HIGH) && (readSensor1 == true)) {
+    } else if ((digitalRead(SENSOR_LANE_1_PIN) == HIGH) && (readSensor1 == true)) {
         readSensor1 = false;
         laps1++;
         now1 = millis();
@@ -386,10 +404,10 @@ void timeLapControl()
         }
     }
 
-    if ((digitalRead(SENSOR_LANE_2) == LOW) && (readSensor2 == false)) {
+    if ((digitalRead(SENSOR_LANE_2_PIN) == LOW) && (readSensor2 == false)) {
         readSensor2 = true;
 
-    } else if ((digitalRead(SENSOR_LANE_2) == HIGH) && (readSensor2 == true)) {
+    } else if ((digitalRead(SENSOR_LANE_2_PIN) == HIGH) && (readSensor2 == true)) {
         readSensor2 = false;
         laps2++;
         now2 = millis();
